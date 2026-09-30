@@ -6,7 +6,7 @@
 <title>Clipe Studio — crie seu videoclipe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&family=JetBrains+Mono:wght@500&family=Bebas+Neue&family=Permanent+Marker&family=Press+Start+2P&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;800&family=JetBrains+Mono:wght@500&family=Bebas+Neue&family=Permanent+Marker&family=Press+Start+2P&family=Playfair+Display:wght@700&family=Bangers&family=Lilita+One&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme:dark;
@@ -27,7 +27,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand svg{width:28px;height:28px}
 
 .stage{position:relative;flex:1;min-height:0;background:#0c0919;border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.stage canvas{display:block;width:100%;height:100%;object-fit:contain}
+.stage canvas{display:block;width:100%;height:100%;object-fit:contain;touch-action:none}
 .stage:fullscreen{border:0;border-radius:0}
 .stage.drag{outline:3px dashed var(--accent);outline-offset:-10px}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px;background:linear-gradient(to top,rgba(12,9,25,.8),rgba(12,9,25,.2))}
@@ -78,6 +78,19 @@ button,input,select,textarea{font:inherit;color:inherit}
 .chk input{width:20px;height:20px;accent-color:var(--accent);margin:0}
 .hint{font-size:13px;color:var(--muted);margin:-4px 0 14px}
 .row-btns{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.empty{pointer-events:none}
+.empty label{pointer-events:auto}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.chip{display:flex;align-items:center;gap:8px;max-width:100%;padding:6px 12px 6px 6px;border-radius:12px;border:1px solid var(--line);background:var(--ink);cursor:pointer;text-align:left}
+.chip.sel{border-color:var(--accent);background:var(--panel2)}
+.chip img{width:34px;height:34px;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(#3a3060 0 25%,#2a2250 0 50%) 50%/12px 12px}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;font-size:13px}
+.chip .tm{font-family:'JetBrains Mono',ui-monospace,monospace;color:var(--accent2);padding-left:6px}
+.tfld{margin:0 0 14px}
+.tfld .lbl{display:block;font-size:14px;margin-bottom:4px}
+.trow{display:flex;gap:6px}
+.trow input{flex:1;min-width:0;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--ink);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px}
+.fld textarea.short{min-height:76px;font-family:inherit;font-size:15px;line-height:1.4}
 
 .prog{height:8px;background:var(--ink);border-radius:8px;overflow:hidden;margin:6px 0 14px}
 .prog>i{display:block;height:100%;width:0;background:var(--accent)}
@@ -141,8 +154,10 @@ button,input,select,textarea{font:inherit;color:inherit}
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="midia" aria-selected="true">Mídia</button>
       <button class="tab" role="tab" data-tab="viz" aria-selected="false">Visualizer</button>
+      <button class="tab" role="tab" data-tab="chars" aria-selected="false">Personagens</button>
+      <button class="tab" role="tab" data-tab="caps" aria-selected="false">Textos</button>
+      <button class="tab" role="tab" data-tab="texto" aria-selected="false">Cartão e letra</button>
       <button class="tab" role="tab" data-tab="fx" aria-selected="false">Efeitos</button>
-      <button class="tab" role="tab" data-tab="texto" aria-selected="false">Texto</button>
       <button class="tab" role="tab" data-tab="export" aria-selected="false">Exportar</button>
     </nav>
 
@@ -277,6 +292,8 @@ button,input,select,textarea{font:inherit;color:inherit}
           <option>Permanent Marker</option>
           <option>Press Start 2P</option>
           <option>Playfair Display</option>
+          <option>Bangers</option>
+          <option>Lilita One</option>
         </select>
       </label>
       <label class="fld"><span class="lbl">Cor do texto</span><input type="color" data-s="tcolor" value="#ffffff"></label>
@@ -295,6 +312,137 @@ button,input,select,textarea{font:inherit;color:inherit}
         <input type="range" data-s="lyricSize" min="20" max="90" step="1" value="44"></label>
       <label class="fld"><span class="lbl">Altura da letra</span><output></output>
         <input type="range" data-s="lyricY" data-fmt="pct" min="0.3" max="0.95" step="0.01" value="0.82"></label>
+    </div>
+
+    <!-- PERSONAGENS -->
+    <div class="pane" id="pane-chars" hidden>
+      <h3>Personagens</h3>
+      <p class="hint">Use PNG com fundo transparente. Depois de adicionar, arraste o personagem direto no vídeo para posicionar.</p>
+      <div class="row-btns">
+        <label class="btn small primary">Adicionar PNG<input type="file" id="fChar" accept="image/*" multiple hidden></label>
+      </div>
+      <div class="chips" id="charList"></div>
+      <p class="hint" id="charEmpty">Nenhum personagem ainda.</p>
+
+      <div id="charEditor" hidden>
+        <h3>Personagem selecionado</h3>
+        <label class="fld"><span class="lbl">Nome</span><input type="text" data-ck="name"></label>
+        <label class="fld"><span class="lbl">Posição horizontal</span><output></output>
+          <input type="range" data-ck="x" data-fmt="pct" min="0" max="1" step="0.005" value="0.5"></label>
+        <label class="fld"><span class="lbl">Posição vertical</span><output></output>
+          <input type="range" data-ck="y" data-fmt="pct" min="0" max="1" step="0.005" value="0.5"></label>
+        <label class="fld"><span class="lbl">Tamanho</span><output></output>
+          <input type="range" data-ck="size" data-fmt="pct" min="0.05" max="1.5" step="0.01" value="0.5"></label>
+        <label class="fld"><span class="lbl">Rotação</span><output></output>
+          <input type="range" data-ck="rot" min="-180" max="180" step="1" value="0"></label>
+        <label class="fld"><span class="lbl">Opacidade</span><output></output>
+          <input type="range" data-ck="opacity" data-fmt="pct" min="0.1" max="1" step="0.05" value="1"></label>
+        <label class="chk"><input type="checkbox" data-ck="flip"><span>Espelhar</span></label>
+        <label class="chk"><input type="checkbox" data-ck="shadow"><span>Sombra</span></label>
+        <label class="fld"><span class="lbl">Camada</span>
+          <select data-ck="layer"><option value="front">Na frente do visualizer</option><option value="back">Atrás do visualizer</option></select>
+        </label>
+
+        <h3>Movimento</h3>
+        <label class="fld"><span class="lbl">Animação</span>
+          <select data-ck="anim">
+            <option value="none">Parado</option>
+            <option value="pulse">Pulsa no grave</option>
+            <option value="bounce">Pula na batida</option>
+            <option value="dance">Dança</option>
+            <option value="float">Flutua</option>
+            <option value="shake">Treme na batida</option>
+            <option value="spin">Gira</option>
+          </select>
+        </label>
+        <label class="fld"><span class="lbl">Intensidade</span><output></output>
+          <input type="range" data-ck="amt" data-fmt="pct" min="0" max="1" step="0.05" value="0.5"></label>
+
+        <h3>Quando aparece</h3>
+        <label class="fld"><span class="lbl">Entrada</span>
+          <select data-ck="entry">
+            <option value="none">Corte seco</option>
+            <option value="fade">Aparecer suave</option>
+            <option value="pop">Pop</option>
+            <option value="slideup">Subir</option>
+            <option value="slideleft">Deslizar da esquerda</option>
+          </select>
+        </label>
+        <div class="pair">
+          <div class="tfld"><span class="lbl">Aparece em</span>
+            <div class="trow"><input type="text" inputmode="decimal" data-ck="start" data-time placeholder="0:00.0"><button class="btn small" type="button" data-now="start">Agora</button></div></div>
+          <div class="tfld"><span class="lbl">Some em</span>
+            <div class="trow"><input type="text" inputmode="decimal" data-ck="end" data-time placeholder="até o fim"><button class="btn small" type="button" data-now="end">Agora</button></div></div>
+        </div>
+        <p class="hint">Aceita 12.5 ou 0:12.5. Deixe o campo "Some em" vazio para o personagem ficar até o final.</p>
+        <div class="row-btns">
+          <button class="btn small" id="btnCharDup" type="button">Duplicar</button>
+          <button class="btn small" id="btnCharDel" type="button">Remover</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEXTOS COM TEMPO -->
+    <div class="pane" id="pane-caps" hidden>
+      <h3>Títulos e legendas</h3>
+      <p class="hint">Cada texto só aparece entre o tempo de início e o de fim. Arraste o texto direto no vídeo para posicionar.</p>
+      <div class="row-btns">
+        <button class="btn small primary" id="btnAddTitle" type="button">Adicionar título</button>
+        <button class="btn small primary" id="btnAddCap" type="button">Adicionar legenda</button>
+        <label class="btn small">Importar .srt<input type="file" id="fSrt" accept=".srt,text/plain" hidden></label>
+      </div>
+      <div class="chips" id="capList"></div>
+      <p class="hint" id="capEmpty">Nenhum texto ainda. O tempo de início vem do ponto onde a música está.</p>
+
+      <div id="capEditor" hidden>
+        <h3>Texto selecionado</h3>
+        <label class="fld"><span class="lbl">Texto</span><textarea class="short" data-tk="text" spellcheck="false"></textarea></label>
+        <div class="pair">
+          <div class="tfld"><span class="lbl">Aparece em</span>
+            <div class="trow"><input type="text" inputmode="decimal" data-tk="start" data-time placeholder="0:00.0"><button class="btn small" type="button" data-now="start">Agora</button></div></div>
+          <div class="tfld"><span class="lbl">Some em</span>
+            <div class="trow"><input type="text" inputmode="decimal" data-tk="end" data-time placeholder="até o fim"><button class="btn small" type="button" data-now="end">Agora</button></div></div>
+        </div>
+        <p class="hint">Aceita 12.5 ou 0:12.5. Deixe o campo "Some em" vazio para o texto ficar até o final.</p>
+        <label class="fld"><span class="lbl">Entrada</span>
+          <select data-tk="entry">
+            <option value="none">Corte seco</option>
+            <option value="fade">Aparecer suave</option>
+            <option value="pop">Pop</option>
+            <option value="slideup">Subir</option>
+            <option value="slideleft">Deslizar da esquerda</option>
+            <option value="type">Digitando</option>
+          </select>
+        </label>
+
+        <h3>Posição e tamanho</h3>
+        <label class="fld"><span class="lbl">Posição horizontal</span><output></output>
+          <input type="range" data-tk="x" data-fmt="pct" min="0" max="1" step="0.005" value="0.5"></label>
+        <label class="fld"><span class="lbl">Posição vertical</span><output></output>
+          <input type="range" data-tk="y" data-fmt="pct" min="0" max="1" step="0.005" value="0.5"></label>
+        <label class="fld"><span class="lbl">Tamanho</span><output></output>
+          <input type="range" data-tk="size" min="16" max="200" step="1" value="40"></label>
+        <label class="fld"><span class="lbl">Rotação</span><output></output>
+          <input type="range" data-tk="rot" min="-45" max="45" step="1" value="0"></label>
+
+        <h3>Aparência</h3>
+        <label class="fld"><span class="lbl">Fonte</span>
+          <select data-tk="font"><option>Bricolage Grotesque</option><option>Bebas Neue</option><option>Permanent Marker</option><option>Press Start 2P</option><option>Playfair Display</option><option>Bangers</option><option>Lilita One</option></select>
+        </label>
+        <label class="fld"><span class="lbl">Cor do texto</span><input type="color" data-tk="color" value="#ffffff"></label>
+        <label class="chk"><input type="checkbox" data-tk="outline"><span>Contorno preto</span></label>
+        <label class="chk"><input type="checkbox" data-tk="bg"><span>Caixa de fundo (estilo legenda)</span></label>
+        <div class="pair">
+          <label class="fld"><span class="lbl">Cor da caixa</span><input type="color" data-tk="bgColor" value="#000000"></label>
+          <label class="fld"><span class="lbl">Opacidade da caixa</span><output></output>
+            <input type="range" data-tk="bgAlpha" data-fmt="pct" min="0.1" max="1" step="0.05" value="0.6"></label>
+        </div>
+        <label class="chk"><input type="checkbox" data-tk="react"><span>Pulsar com o grave</span></label>
+        <div class="row-btns">
+          <button class="btn small" id="btnCapDup" type="button">Duplicar</button>
+          <button class="btn small" id="btnCapDel" type="button">Remover</button>
+        </div>
+      </div>
     </div>
 
     <!-- EXPORTAR -->
@@ -386,11 +534,12 @@ let bassEnv = 0, pulse = 0, lastBeat = 0, bassHist = [], spin = 0;
 let parts = [], scanPat = null, noise = [];
 let lyrics = [], lyricsVer = 0, peaks = null, peakJob = 0;
 let rec = null, chunks = [], recording = false, recStart = 0, lastURL = null;
+let chars = [], caps = [], selChar = null, selCap = null, activeTab = 'midia', uid = 0;
 
-const FONT_W = { 'Bebas Neue': 400, 'Permanent Marker': 400, 'Press Start 2P': 400 };
-const FONT_S = { 'Bebas Neue': 1.25, 'Press Start 2P': 0.6, 'Permanent Marker': 1.05, 'Playfair Display': 1 };
+const FONT_W = { 'Bebas Neue': 400, 'Permanent Marker': 400, 'Press Start 2P': 400, 'Bangers': 400, 'Lilita One': 400 };
+const FONT_S = { 'Bebas Neue': 1.25, 'Press Start 2P': 0.6, 'Permanent Marker': 1.05, 'Playfair Display': 1, 'Bangers': 1.15, 'Lilita One': 1.05 };
 const STYLE_Y = { bars: 0.88, mirror: 0.5, circle: 0.5, wave: 0.5, area: 0.9, none: 0.5 };
-['Bricolage Grotesque','Bebas Neue','Permanent Marker','Press Start 2P','Playfair Display'].forEach(f => {
+['Bricolage Grotesque','Bebas Neue','Permanent Marker','Press Start 2P','Playfair Display','Bangers','Lilita One'].forEach(f => {
   try { document.fonts.load(`700 40px "${f}"`); } catch(e){}
 });
 
@@ -533,7 +682,7 @@ const stage = $('#stage');
 stage.addEventListener('drop', e => {
   const f = e.dataTransfer.files[0]; if (!f) return;
   if (isAudioFile(f) || isVideoFile(f)) loadMain(f);
-  else if (f.type.startsWith('image')) loadBg(f);
+  else if (f.type.startsWith('image')){ if (activeTab === 'chars') addChar(f); else loadBg(f); }
 });
 
 /* ============ linha do tempo com forma de onda ============ */
@@ -620,6 +769,7 @@ document.addEventListener('keydown', e => {
 
 /* ============ abas ============ */
 function switchTab(name){
+  activeTab = name;
   $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
   $$('.pane').forEach(p => { p.hidden = p.id !== 'pane-' + name; });
 }
@@ -741,10 +891,10 @@ function blitCover(img, dx, dy, dw, dh, zoom = 1, ox = 0, oy = 0){
   const s = Math.max(dw / iw, dh / ih) * zoom, sw = dw / s, sh = dh / s;
   ctx.drawImage(img, (iw - sw) / 2 - ox / s, (ih - sh) / 2 - oy / s, sw, sh, dx, dy, dw, dh);
 }
-function font(sz){
-  const f = S.font;
+function fontFor(f, sz){
   return `${FONT_W[f] || 700} ${Math.round(sz * U * (FONT_S[f] || 1))}px "${f}", system-ui, sans-serif`;
 }
+function font(sz){ return fontFor(S.font, sz); }
 function wrapText(text, maxW){
   const words = text.split(/\s+/), lines = []; let cur = '';
   for (const w of words){
@@ -994,12 +1144,363 @@ function drawFX(t){
 
 function render(t, dt){
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+  ctx.imageSmoothingQuality = 'high';
   drawBG(t);
   drawParticles(t, dt);
+  drawChars('back', t);
   drawViz(t);
+  drawChars('front', t);
   drawCard(); drawMark(); drawLyrics(); drawIntro();
+  drawCaps(t);
   drawFX(t);
+  drawSelection();
 }
+
+/* ============ personagens (PNG) e textos com tempo ============ */
+const charEd = $('#charEditor'), capEd = $('#capEditor');
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeBack = p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const editing = () => !recording && (activeTab === 'chars' || activeTab === 'caps');
+const curTime = () => (hasMedia && isFinite(media.currentTime)) ? media.currentTime : 0;
+
+function parseTime(s){
+  s = String(s).trim().replace(',', '.');
+  if (!s) return null;
+  if (s.includes(':')){
+    const parts = s.split(':').map(Number);
+    if (parts.some(isNaN)) return null;
+    let sec = 0; for (const p of parts) sec = sec * 60 + p;
+    return sec;
+  }
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+function fmtT(v){
+  if (v == null || isNaN(v)) return '';
+  v = Math.round(v * 10) / 10;
+  const m = Math.floor(v / 60);
+  return m + ':' + (v - m * 60).toFixed(1).padStart(4, '0');
+}
+
+/* janela de tempo + animação de entrada/saída */
+function timing(it, ct, selected){
+  const start = it.start || 0, end = it.end;
+  const idle = media.paused && !recording;
+  const preview = selected && editing() && idle;
+  const inWin = ct >= start && (end == null || ct <= end);
+  if (!inWin) return preview ? { a: 0.35, sc: 1, dx: 0, dy: 0, full: true } : null;
+  let p = 1, q = 1;
+  if (!idle){
+    p = clamp((ct - start) / 0.4, 0, 1);
+    q = end == null ? 1 : clamp((end - ct) / 0.3, 0, 1);
+  }
+  let a = 1, sc = 1, dx = 0, dy = 0;
+  const e = easeOut(p);
+  switch (it.entry){
+    case 'fade': a = p; break;
+    case 'pop': sc = easeBack(p); a = Math.min(1, p * 4); break;
+    case 'slideup': dy = (1 - e) * 0.12 * H; a = p; break;
+    case 'slideleft': dx = -(1 - e) * 0.18 * W; a = p; break;
+  }
+  if (it.entry && it.entry !== 'none') a = Math.min(a, q);
+  return { a, sc, dx, dy, full: idle };
+}
+
+/* ---- personagens ---- */
+function drawChar(c, t, ct){
+  const tm = timing(c, ct, c === selChar);
+  if (!tm){ c._box = null; return; }
+  const iw = c.img.naturalWidth || c.img.width, ih = c.img.naturalHeight || c.img.height;
+  if (!iw || !ih){ c._box = null; return; }
+  const h = c.size * H, w = h * iw / ih, A = c.amt;
+  let cx = c.x * W + tm.dx, cy = c.y * H + tm.dy, rot = c.rot * Math.PI / 180, sc = tm.sc;
+  switch (c.anim){
+    case 'pulse': sc *= 1 + A * 0.25 * bassEnv; break;
+    case 'bounce': cy -= pulse * A * 0.06 * H; sc *= 1 + pulse * A * 0.06; break;
+    case 'dance': rot += Math.sin(t * 7) * A * 0.25 * (0.3 + bassEnv); cx += Math.sin(t * 3.5) * A * 0.02 * W * (0.3 + bassEnv); break;
+    case 'float': cy += Math.sin(t * 1.6) * A * 0.03 * H; break;
+    case 'shake': cx += (Math.random() - 0.5) * A * 0.03 * W * pulse; cy += (Math.random() - 0.5) * A * 0.02 * H * pulse; break;
+    case 'spin': rot += t * A * 2; break;
+  }
+  ctx.save();
+  ctx.globalAlpha = tm.a * c.opacity;
+  if (c.shadow){ ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 24 * U; ctx.shadowOffsetY = 8 * U; }
+  ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(c.flip ? -sc : sc, sc);
+  ctx.drawImage(c.img, -w / 2, -h / 2, w, h);
+  ctx.restore();
+  c._box = { cx, cy, w: w * sc, h: h * sc, rot };
+}
+function drawChars(layer, t){
+  const ct = curTime();
+  for (const c of chars) if (c.layer === layer) drawChar(c, t, ct);
+}
+
+/* ---- textos ---- */
+function wrapMulti(text, maxW){
+  const out = [];
+  for (const para of String(text).split('\n')){
+    if (!para.trim()){ out.push(''); continue; }
+    out.push(...wrapText(para, maxW));
+  }
+  return out;
+}
+function drawCap(k, t, ct){
+  if (!k.text){ k._box = null; return; }
+  const tm = timing(k, ct, k === selCap);
+  if (!tm){ k._box = null; return; }
+  ctx.save();
+  ctx.font = fontFor(k.font, k.size);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lines = wrapMulti(k.text, W * 0.86);
+  const lh = k.size * U * 1.2 * (FONT_S[k.font] || 1);
+  let maxLW = 0; for (const l of lines) maxLW = Math.max(maxLW, ctx.measureText(l).width);
+  const padX = k.bg ? k.size * U * 0.6 : 0, padY = k.bg ? k.size * U * 0.35 : 0;
+  const bw = maxLW + padX * 2, bh = lines.length * lh + padY * 2;
+  let shown = lines;
+  if (k.entry === 'type' && !tm.full){
+    const st = k.start || 0, dur = (k.end != null ? k.end - st : 4);
+    const total = Math.max(0.3, Math.min(dur * 0.7, Math.max(0.6, k.text.length * 0.045)));
+    let rem = Math.floor(k.text.length * clamp((ct - st) / total, 0, 1));
+    shown = lines.map(l => { const s = l.slice(0, Math.max(0, rem)); rem -= l.length; return s; });
+  }
+  const sc = tm.sc * (k.react ? 1 + bassEnv * 0.08 : 1);
+  const cx = k.x * W + tm.dx, cy = k.y * H + tm.dy, rot = k.rot * Math.PI / 180;
+  ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(sc, sc);
+  ctx.globalAlpha = tm.a;
+  if (k.bg){
+    const c = rgbOf(k.bgColor);
+    ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${k.bgAlpha})`;
+    rr(-bw / 2, -bh / 2, bw, bh, Math.min(bh / 2, 16 * U));
+  } else {
+    ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 12 * U; ctx.shadowOffsetY = 3 * U;
+  }
+  const top = -(lines.length - 1) * lh / 2;
+  ctx.lineJoin = 'round';
+  shown.forEach((ln, i) => {
+    if (!ln) return;
+    if (k.outline){ ctx.lineWidth = Math.max(2, k.size * U * 0.16); ctx.strokeStyle = '#000'; ctx.strokeText(ln, 0, top + i * lh); }
+    ctx.fillStyle = k.color; ctx.fillText(ln, 0, top + i * lh);
+  });
+  ctx.restore();
+  k._box = { cx, cy, w: bw * sc, h: bh * sc, rot };
+}
+function drawCaps(t){
+  const ct = curTime();
+  for (const k of caps) drawCap(k, t, ct);
+}
+
+/* contorno pontilhado do item selecionado (só na edição, nunca na gravação) */
+function drawSelection(){
+  if (!editing()) return;
+  const it = activeTab === 'chars' ? selChar : selCap;
+  if (!it || !it._box) return;
+  const b = it._box;
+  ctx.save();
+  ctx.translate(b.cx, b.cy); ctx.rotate(b.rot);
+  ctx.setLineDash([10 * U, 8 * U]); ctx.lineWidth = 2.5 * U; ctx.strokeStyle = '#ffcf4d';
+  ctx.strokeRect(-b.w / 2 - 6 * U, -b.h / 2 - 6 * U, b.w + 12 * U, b.h + 12 * U);
+  ctx.restore();
+}
+
+/* ---- arrastar no vídeo ---- */
+function toCanvas(e){
+  const r = cv.getBoundingClientRect(), k = Math.min(r.width / W, r.height / H);
+  const dw = W * k, dh = H * k, ox = (r.width - dw) / 2, oy = (r.height - dh) / 2;
+  return { x: (e.clientX - r.left - ox) / k, y: (e.clientY - r.top - oy) / k };
+}
+function hitTest(px, py){
+  const test = it => {
+    const b = it._box; if (!b) return false;
+    const dx = px - b.cx, dy = py - b.cy, c = Math.cos(-b.rot), s = Math.sin(-b.rot);
+    const lx = dx * c - dy * s, ly = dx * s + dy * c, pad = 10 * U;
+    return Math.abs(lx) <= b.w / 2 + pad && Math.abs(ly) <= b.h / 2 + pad;
+  };
+  if (activeTab === 'caps'){
+    for (let i = caps.length - 1; i >= 0; i--) if (test(caps[i])) return { kind: 'cap', item: caps[i] };
+  } else if (activeTab === 'chars'){
+    const order = chars.filter(c => c.layer === 'front').reverse().concat(chars.filter(c => c.layer === 'back').reverse());
+    for (const c of order) if (test(c)) return { kind: 'char', item: c };
+  }
+  return null;
+}
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+  if (!editing()) return;
+  const p = toCanvas(e), hit = hitTest(p.x, p.y);
+  if (!hit) return;
+  cv.setPointerCapture(e.pointerId);
+  drag = { kind: hit.kind, item: hit.item, ox: hit.item.x * W - p.x, oy: hit.item.y * H - p.y };
+  if ((hit.kind === 'char' ? selChar : selCap) !== hit.item) select(hit.kind, hit.item);
+  cv.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+cv.addEventListener('pointermove', e => {
+  const p = toCanvas(e);
+  if (drag){
+    drag.item.x = clamp((p.x + drag.ox) / W, 0, 1);
+    drag.item.y = clamp((p.y + drag.oy) / H, 0, 1);
+    if (drag.kind === 'char') syncEditor(charEd, 'data-ck', drag.item); else syncEditor(capEd, 'data-tk', drag.item);
+  } else {
+    cv.style.cursor = (editing() && hitTest(p.x, p.y)) ? 'grab' : 'default';
+  }
+});
+const endDrag = () => { drag = null; cv.style.cursor = 'default'; };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+
+/* ---- editores ---- */
+function syncEditor(root, attr, it){
+  $$(`[${attr}]`, root).forEach(el => {
+    const key = el.getAttribute(attr), v = it[key];
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (el.dataset.time !== undefined) el.value = fmtT(v);
+    else el.value = v == null ? '' : v;
+  });
+  $$('.fld', root).forEach(f => {
+    const out = $('output', f), inp = $('input[type=range]', f);
+    if (out && inp) out.textContent = fmtOut(inp);
+  });
+}
+function bindEditor(root, attr, getSel, after){
+  $$(`[${attr}]`, root).forEach(el => {
+    const key = el.getAttribute(attr);
+    const h = () => {
+      const it = getSel(); if (!it) return;
+      if (el.type === 'checkbox') it[key] = el.checked;
+      else if (el.dataset.time !== undefined) it[key] = parseTime(el.value);
+      else if (el.type === 'range') it[key] = parseFloat(el.value);
+      else it[key] = el.value;
+      if (after) after(it, key);
+    };
+    el.addEventListener('input', h);
+    el.addEventListener('change', h);
+    if (el.dataset.time !== undefined) el.addEventListener('blur', () => { const it = getSel(); if (it) el.value = fmtT(it[key]); });
+  });
+}
+function select(kind, it){
+  if (kind === 'char'){ selChar = it; if (it) syncEditor(charEd, 'data-ck', it); }
+  else { selCap = it; if (it) syncEditor(capEd, 'data-tk', it); }
+  renderLists();
+}
+function renderLists(){
+  const cl = $('#charList'); cl.innerHTML = '';
+  chars.forEach(c => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (c === selChar ? ' sel' : '');
+    const im = document.createElement('img'); im.src = c.url; im.alt = '';
+    const sp = document.createElement('span'); sp.textContent = c.name || 'Personagem';
+    b.append(im, sp); b.addEventListener('click', () => select('char', c)); cl.append(b);
+  });
+  charEd.hidden = !selChar; $('#charEmpty').hidden = chars.length > 0;
+
+  const kl = $('#capList'); kl.innerHTML = '';
+  caps.slice().sort((a, b) => (a.start || 0) - (b.start || 0)).forEach(k => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (k === selCap ? ' sel' : '');
+    const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = fmtT(k.start || 0);
+    const sp = document.createElement('span'); sp.textContent = (k.text || '(vazio)').replace(/\s+/g, ' ').slice(0, 40);
+    b.append(tm, sp); b.addEventListener('click', () => select('cap', k)); kl.append(b);
+  });
+  capEd.hidden = !selCap; $('#capEmpty').hidden = caps.length > 0;
+}
+
+/* ---- criar / remover ---- */
+function addChar(file){
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = () => {
+    let img = im;
+    const mx = Math.max(im.naturalWidth, im.naturalHeight);
+    if (mx > 1600){
+      const k = 1600 / mx, c = document.createElement('canvas');
+      c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); img = c;
+    }
+    const n = chars.length;
+    const c = { id: ++uid, name: file.name.replace(/\.[^.]+$/, '').slice(0, 30) || 'Personagem', img, url,
+      x: clamp(0.8 - n * 0.12, 0.1, 0.9), y: 0.62, size: 0.5, rot: 0, flip: false, opacity: 1,
+      anim: 'pulse', amt: 0.5, layer: 'front', entry: 'none', start: 0, end: null, shadow: true };
+    chars.push(c); select('char', c);
+    toast('Personagem adicionado. Arraste no vídeo para posicionar.');
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('Não consegui abrir essa imagem.'); };
+  im.src = url;
+}
+function removeChar(){
+  if (!selChar) return;
+  if (!chars.some(c => c !== selChar && c.url === selChar.url)) URL.revokeObjectURL(selChar.url);
+  const i = chars.indexOf(selChar); chars.splice(i, 1);
+  selChar = chars[Math.min(i, chars.length - 1)] || null;
+  if (selChar) syncEditor(charEd, 'data-ck', selChar);
+  renderLists();
+}
+function makeCap(kind, o = {}){
+  const st = +curTime().toFixed(1), isT = kind === 'title';
+  const k = Object.assign({ id: ++uid, text: isT ? 'Meu título' : 'Sua legenda aqui', start: st, end: +(st + (isT ? 4 : 3)).toFixed(1),
+    x: 0.5, y: isT ? 0.4 : 0.88, size: isT ? 72 : 34, rot: 0, color: '#ffffff', font: 'Bricolage Grotesque',
+    outline: isT, bg: !isT, bgColor: '#000000', bgAlpha: 0.6, entry: isT ? 'pop' : 'fade', react: false }, o);
+  return k;
+}
+function addCap(kind){ const k = makeCap(kind); caps.push(k); select('cap', k); }
+function removeCap(){
+  if (!selCap) return;
+  const i = caps.indexOf(selCap); caps.splice(i, 1);
+  selCap = caps[Math.min(i, caps.length - 1)] || null;
+  if (selCap) syncEditor(capEd, 'data-tk', selCap);
+  renderLists();
+}
+function importSRT(txt){
+  const blocks = txt.replace(/\r/g, '').trim().split(/\n\s*\n/);
+  const re = /(?:(\d+):)?(\d+):(\d+)[.,](\d+)\s*-->\s*(?:(\d+):)?(\d+):(\d+)[.,](\d+)/;
+  const sec = (h, m, s, ms) => (+h || 0) * 3600 + +m * 60 + +s + +('0.' + ms);
+  let n = 0, lastK = null;
+  for (const b of blocks){
+    const lines = b.split('\n'), i = lines.findIndex(l => l.includes('-->'));
+    if (i < 0) continue;
+    const m = lines[i].match(re); if (!m) continue;
+    const text = lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '').trim(); if (!text) continue;
+    lastK = makeCap('cap', { text, start: +sec(m[1], m[2], m[3], m[4]).toFixed(2), end: +sec(m[5], m[6], m[7], m[8]).toFixed(2) });
+    caps.push(lastK); n++;
+  }
+  if (!n){ toast('Não encontrei legendas nesse arquivo .srt.'); return; }
+  select('cap', lastK);
+  toast(n + (n === 1 ? ' legenda importada.' : ' legendas importadas.'));
+}
+
+bindEditor(charEd, 'data-ck', () => selChar, (it, key) => { if (key === 'name') renderLists(); });
+bindEditor(capEd, 'data-tk', () => selCap, (it, key) => {
+  if (key === 'text' || key === 'start') renderLists();
+  if (key === 'font'){ try { document.fonts.load(`700 40px "${it.font}"`); } catch (e) {} }
+});
+$$('[data-now]').forEach(b => b.addEventListener('click', () => {
+  const isChar = charEd.contains(b), it = isChar ? selChar : selCap;
+  if (!it) return;
+  it[b.dataset.now] = +curTime().toFixed(1);
+  syncEditor(isChar ? charEd : capEd, isChar ? 'data-ck' : 'data-tk', it);
+  if (!isChar) renderLists();
+}));
+$('#fChar').addEventListener('change', e => { Array.from(e.target.files).forEach(addChar); e.target.value = ''; });
+$('#fSrt').addEventListener('change', async e => { const f = e.target.files[0]; if (f) importSRT(await f.text()); e.target.value = ''; });
+$('#btnAddTitle').addEventListener('click', () => addCap('title'));
+$('#btnAddCap').addEventListener('click', () => addCap('cap'));
+$('#btnCharDel').addEventListener('click', removeChar);
+$('#btnCapDel').addEventListener('click', removeCap);
+$('#btnCharDup').addEventListener('click', () => {
+  if (!selChar) return;
+  const d = Object.assign({}, selChar, { id: ++uid, name: selChar.name + ' 2', x: clamp(selChar.x + 0.06, 0, 1), _box: null });
+  chars.push(d); select('char', d);
+});
+$('#btnCapDup').addEventListener('click', () => {
+  if (!selCap) return;
+  const dur = (selCap.end != null ? selCap.end - (selCap.start || 0) : 3);
+  const ns = +((selCap.end != null ? selCap.end : (selCap.start || 0) + 3)).toFixed(1);
+  const d = Object.assign({}, selCap, { id: ++uid, start: ns, end: +(ns + dur).toFixed(1), _box: null });
+  caps.push(d); select('cap', d);
+});
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Delete') return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (activeTab === 'chars') removeChar(); else if (activeTab === 'caps') removeCap();
+});
+renderLists();
 
 /* ============ gravação ============ */
 function pickMime(){
